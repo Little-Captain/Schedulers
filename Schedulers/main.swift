@@ -31,6 +31,6 @@ let animal = BehaviorSubject(value: "[dog]")
 
 
 animal
-  .dump()
-  .dumpingSubscription()
-  .disposed(by: bag)
+    .dump()
+    .dumpingSubscription()
+    .disposed(by: bag)
