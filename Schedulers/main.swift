@@ -23,6 +23,19 @@
 import Foundation
 import RxSwift
 
+fileprivate func getThreadName() -> String {
+    if Thread.current.isMainThread {
+        return "Main Thread"
+    } else if let name = Thread.current.name {
+        if name == "" {
+            return "Anonymous Thread"
+        }
+        return name
+    } else {
+        return "Unknown Thread"
+    }
+}
+
 print("\n\n\n===== Schedulers =====\n")
 
 let globalScheduler = ConcurrentDispatchQueueScheduler(queue: DispatchQueue.global())
@@ -31,6 +44,46 @@ let animal = BehaviorSubject(value: "[dog]")
 
 
 animal
+    .subscribeOn(MainScheduler.instance)
     .dump()
+    .observeOn(globalScheduler)
     .dumpingSubscription()
     .disposed(by: bag)
+
+let fruit = Observable<String>.create { observer in
+    print("create - \(getThreadName())")
+    // 如果这里明确指定了线程, subscribeOn 也无法改变线程
+    // subscribeOn, 改变的是 create 闭包执行的线程
+//    DispatchQueue.main.async {
+//        observer.onNext("main - [apple]")
+//    }
+    observer.onNext("[apple]")
+    sleep(2)
+    observer.onNext("[pineapple]")
+    sleep(2)
+    observer.onNext("[strawberry]")
+    return Disposables.create()
+}
+
+let animalsThread = Thread {
+    sleep(3)
+    // 默认: 在什么地方订阅(subscribe), 就在什么地方观察(observe)
+    animal.onNext("[cat]")
+    sleep(3)
+    animal.onNext("[tiger]")
+    sleep(3)
+    animal.onNext("[fox]")
+    sleep(3)
+    animal.onNext("[leopard]")
+}
+animalsThread.name = "Animals Thread"
+animalsThread.start()
+
+fruit
+    .subscribeOn(globalScheduler)
+    .dump()
+    .observeOn(MainScheduler.instance)
+    .dumpingSubscription()
+    .disposed(by: bag)
+
+RunLoop.main.run(until: Date(timeIntervalSinceNow: 13))
