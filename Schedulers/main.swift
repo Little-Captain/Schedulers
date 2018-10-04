@@ -57,6 +57,7 @@ let fruit = Observable<String>.create { observer in
 //    DispatchQueue.main.async {
 //        observer.onNext("main - [apple]")
 //    }
+    // 默认: 在什么地方订阅(subscribe), 就在什么地方观察(observe)
     observer.onNext("[apple]")
     sleep(2)
     observer.onNext("[pineapple]")
@@ -65,9 +66,11 @@ let fruit = Observable<String>.create { observer in
     return Disposables.create()
 }
 
+// 冷热 Observable 的区别决定了 subscribeOn 是否能控制 Observable 计算事件的线程
+// 冷 Observable : subscribeOn 可以控制 Observable 计算事件的线程
+// 热 Observable : subscribeOn 不能控制 Observable 计算事件的线程
 let animalsThread = Thread {
     sleep(3)
-    // 默认: 在什么地方订阅(subscribe), 就在什么地方观察(observe)
     animal.onNext("[cat]")
     sleep(3)
     animal.onNext("[tiger]")
